@@ -1,0 +1,8 @@
+body {
+  margin: 0;
+  background-color: #b5f5ec;
+}
+
+#chart {
+  height: 100vh;
+}
