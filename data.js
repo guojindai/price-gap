@@ -46,19 +46,19 @@ async function getInPrices() {
 }
 
 async function getBTCOutPrice() {
-  const resBody = await request('https://otcbtc.com/sell_offers?currency=btc&fiat_currency=cny&payment_type=all&sort_by=most_trust');
+  const resBody = await request('https://otcbtc.com/sell_offers?currency=btc&fiat_currency=cny&payment_type=all');
   const $ = cheerio.load(resBody);
   return formatPrice($('.long-solution-list .list-content').eq(0).find('.price').text());
 }
 
 async function getETHOutPrice() {
-  const resBody = await request('https://otcbtc.com/sell_offers?currency=eth&fiat_currency=cny&payment_type=all&sort_by=most_trust');
+  const resBody = await request('https://otcbtc.com/sell_offers?currency=eth&fiat_currency=cny&payment_type=all');
   const $ = cheerio.load(resBody);
   return formatPrice($('.long-solution-list .list-content').eq(0).find('.price').text());
 }
 
 async function getEOSOutPrice() {
-  const resBody = await request('https://otcbtc.com/sell_offers?currency=eos&fiat_currency=cny&payment_type=all&sort_by=most_trust');
+  const resBody = await request('https://otcbtc.com/sell_offers?currency=eos&fiat_currency=cny&payment_type=all');
   const $ = cheerio.load(resBody);
   return formatPrice($('.long-solution-list .list-content').eq(0).find('.price').text());
 }
