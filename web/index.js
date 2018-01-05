@@ -1,9 +1,37 @@
 jQuery(function ($) {
 
+  var series = [
+    {
+      name:'A',
+      type:'line',
+    },
+    {
+      name:'B',
+      type:'line',
+    },
+    {
+      name:'C',
+      type:'line',
+    },
+  ];
+
+  function transfromData(text) {
+    var data = [];
+    text.split(/\n/).forEach(function (line) {
+      var fields = line.trim().split(',');
+      if (fields.length === 3) {
+        var pi = parseInt(fields[1]);
+        var po = parseInt(fields[2]);
+        data.push([fields[0], parseInt(((po - pi) / pi) * 100), pi, po]);
+      }
+    });
+    return data;
+  }
+
   function renderChart() {
     var option = {
       title: {
-        text: '堆叠区域图'
+        text: 'GAP'
       },
       tooltip : {
         trigger: 'axis',
@@ -12,7 +40,7 @@ jQuery(function ($) {
         }
       },
       legend: {
-        data:['邮件营销', '联盟广告']
+        data:['A', 'B', 'C']
       },
       toolbox: {
         feature: {
@@ -38,28 +66,21 @@ jQuery(function ($) {
           type : 'value'
         }
       ],
-      series: [
-        {
-          name:'邮件营销',
-          type:'line',
-          data:[120, 132, 101, 134, 90, 230, 210]
-        },
-        {
-          name:'联盟广告',
-          type:'line',
-          data:[220, 182, 191, 234, 290, 330, 310]
-        }
-      ]
+      series: series,
     };
     var myChart = echarts.init(document.getElementById('chart'));
     myChart.setOption(option);
   }
 
   function loadData() {
-    $.when($.get('../data/d1.csv', 'text'), $.get('../data/d1.csv', 'text'))
-      .then(function (d1, d2) {
-      console.log(d1[0], d2[0]);
-    })
+    $.when($.get('../data/BTC.csv', 'text'),
+      $.get('../data/ETH.csv', 'text'),
+      $.get('../data/EOS.csv', 'text'),).then(function (resBTC, resETH, resEOS) {
+      series[0].data = transfromData(resBTC[0]);
+      series[1].data = transfromData(resETH[0]);
+      series[2].data = transfromData(resEOS[0]);
+      renderChart();
+    });
   }
 
   loadData();
