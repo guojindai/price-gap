@@ -63,7 +63,10 @@ jQuery(function ($) {
       ],
       yAxis: [
         {
-          type : 'value'
+          type : 'value',
+          max: 50,
+          min: -10,
+          interval: 5
         }
       ],
       series: series,
