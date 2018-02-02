@@ -6,7 +6,6 @@ const moment = require('moment');
 
 const RE_PRICE = /([0-9,]+)/;
 const RE_ALL_COMMA = /,/g;
-const ROBOT = 'https://oapi.dingtalk.com/robot/send?access_token=d59cd7c674f275bfd984e44395077af98ccd6b9f77f55d30cd26bfed7f1b302f';
 
 const dataDir = path.resolve(__dirname, './data');
 if (!fs.existsSync(dataDir)){
@@ -35,85 +34,34 @@ function getNowTimeString() {
   return moment().format('YYYY-MM-DD HH:mm:ss');
 }
 
-async function getInPrices() {
-  const inPrices = {};
+async function getPrices() {
+  const prices = {
+    inPrices: {},
+    outPrices: {},
+  };
   const resBody = await request('https://otcbtc.com/');
   const $ = cheerio.load(resBody);
-  const $trs = $('.lp-section-2-coin').eq(0).find('tr');
-  inPrices.BTC = formatPrice($trs.eq(1).find('td').eq(2).text());
-  inPrices.ETH = formatPrice($trs.eq(2).find('td').eq(2).text());
-  inPrices.EOS = formatPrice($trs.eq(3).find('td').eq(2).text());
-  return inPrices;
-}
-
-async function getBTCOutPrice() {
-  const resBody = await request('https://otcbtc.com/sell_offers?currency=btc&fiat_currency=cny&payment_type=all');
-  const $ = cheerio.load(resBody);
-  return formatPrice($('.long-solution-list .list-content').eq(0).find('.price').text());
-}
-
-async function getETHOutPrice() {
-  const resBody = await request('https://otcbtc.com/sell_offers?currency=eth&fiat_currency=cny&payment_type=all');
-  const $ = cheerio.load(resBody);
-  return formatPrice($('.long-solution-list .list-content').eq(0).find('.price').text());
-}
-
-async function getEOSOutPrice() {
-  const resBody = await request('https://otcbtc.com/sell_offers?currency=eos&fiat_currency=cny&payment_type=all');
-  const $ = cheerio.load(resBody);
-  return formatPrice($('.long-solution-list .list-content').eq(0).find('.price').text());
+  const $trs = $('.lp-section-2-coin').eq(0).find('.lp-coin-list-content');
+  prices.outPrices.BTC = formatPrice($trs.eq(0).find('.lp-coin-list-fiat-highest-price').text());
+  prices.inPrices.BTC = formatPrice($trs.eq(0).find('.lp-coin-list-trading-latest-price .lp-coin-list-trading-fiat-price').text());
+  // prices.outPrices.ETH = formatPrice($trs.eq(1).find('.lp-coin-list-fiat-highest-price').text());
+  // prices.inPrices.ETH = formatPrice($trs.eq(1).find('.lp-coin-list-trading-latest-price .lp-coin-list-trading-fiat-price').text());
+  prices.outPrices.EOS = formatPrice($trs.eq(2).find('.lp-coin-list-fiat-highest-price').text());
+  prices.inPrices.EOS = formatPrice($trs.eq(2).find('.lp-coin-list-trading-latest-price .lp-coin-list-trading-fiat-price').text());
+  return prices;
 }
 
 async function getData() {
-  const inPrices = await getInPrices();
-  const btcOutPrice = await getBTCOutPrice();
-  const ethOutPrice = await getETHOutPrice();
-  const eosOutPrice = await getEOSOutPrice();
-  return {
-    inPrices,
-    btcOutPrice,
-    ethOutPrice,
-    eosOutPrice,
-  };
+  const prices = await getPrices();
+  return prices;
 }
 
-function robotMsg(inPrice, outPrice) {
-  return `${inPrice}, ${outPrice}, ${parseInt((outPrice - inPrice) * 100 / inPrice)}`;
-}
-
-function logError(msg) {
-  fs.appendFileSync(path.resolve(dataDir, 'data.log'), `${msg}\n`);
-}
-
-getData().then((data) => {
+getData().then((prices) => {
   const now = getNowTimeString();
-  fs.appendFileSync(path.resolve(dataDir, 'BTC.csv'), `${now},${data.inPrices.BTC},${data.btcOutPrice}\n`);
-  fs.appendFileSync(path.resolve(dataDir, 'ETH.csv'), `${now},${data.inPrices.ETH},${data.ethOutPrice}\n`);
-  fs.appendFileSync(path.resolve(dataDir, 'EOS.csv'), `${now},${data.inPrices.EOS},${data.eosOutPrice}\n`);
-  const msg =
-`
-### GAP
-> A: ${robotMsg(data.inPrices.BTC, data.btcOutPrice)}\n
-> B: ${robotMsg(data.inPrices.ETH, data.ethOutPrice)}\n
-> C: ${robotMsg(data.inPrices.EOS, data.eosOutPrice)}\n
-`;
-  request({
-    method: 'POST',
-    uri: ROBOT,
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      msgtype: 'markdown',
-      markdown: {
-        title: 'GAP',
-        text: msg
-      }
-    })
-  }).catch((err) => {
-    logError(`${getNowTimeString()}, ${JSON.stringify(err)}`);
-  });
+  fs.appendFileSync(path.resolve(dataDir, 'BTC.csv'), `${now},${prices.inPrices.BTC},${prices.outPrices.BTC}\n`);
+  // fs.appendFileSync(path.resolve(dataDir, 'ETH.csv'), `${now},${prices.inPrices.ETH},${prices.outPrices.ETH}\n`);
+  fs.appendFileSync(path.resolve(dataDir, 'EOS.csv'), `${now},${prices.inPrices.EOS},${prices.outPrices.EOS}\n`);
 }).catch((err) => {
-  console.log(err);
-  logError(`${getNowTimeString()}, ${JSON.stringify(err)}, ${err}`);
+  console.error(err);
+  fs.appendFileSync(path.resolve(dataDir, 'data.log'), `${getNowTimeString()}, ${err}`);
 });
