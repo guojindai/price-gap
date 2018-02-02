@@ -6,6 +6,8 @@ const moment = require('moment');
 
 const RE_PRICE = /([0-9,]+)/;
 const RE_ALL_COMMA = /,/g;
+const ROBOT = 'https://oapi.dingtalk.com/robot/send?access_token=d59cd7c674f275bfd984e44395077af98ccd6b9f77f55d30cd26bfed7f1b302f';
+
 
 const dataDir = path.resolve(__dirname, './data');
 if (!fs.existsSync(dataDir)){
@@ -56,12 +58,42 @@ async function getData() {
   return prices;
 }
 
+function robotMsg(inPrice, outPrice) {
+  return `${inPrice}, ${outPrice}, ${parseInt((outPrice - inPrice) * 100 / inPrice)}`;
+}
+
+function logError(msg) {
+  fs.appendFileSync(path.resolve(dataDir, 'data.log'), `${msg}\n`);
+}
+
 getData().then((prices) => {
   const now = getNowTimeString();
   fs.appendFileSync(path.resolve(dataDir, 'BTC.csv'), `${now},${prices.inPrices.BTC},${prices.outPrices.BTC}\n`);
   // fs.appendFileSync(path.resolve(dataDir, 'ETH.csv'), `${now},${prices.inPrices.ETH},${prices.outPrices.ETH}\n`);
   fs.appendFileSync(path.resolve(dataDir, 'EOS.csv'), `${now},${prices.inPrices.EOS},${prices.outPrices.EOS}\n`);
+  const msg =
+`
+### GAP
+> A: ${robotMsg(prices.inPrices.BTC, prices.outPrices.BTC)}\n
+> C: ${robotMsg(prices.inPrices.EOS, prices.outPrices.EOS)}\n
+`;
+  request({
+    method: 'POST',
+    uri: ROBOT,
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      msgtype: 'markdown',
+      markdown: {
+        title: 'GAP',
+        text: msg
+      }
+    })
+  }).catch((err) => {
+    logError(`${getNowTimeString()}, ${err}`);
+  });
 }).catch((err) => {
   console.error(err);
-  fs.appendFileSync(path.resolve(dataDir, 'data.log'), `${getNowTimeString()}, ${err}`);
+  logError(`${getNowTimeString()}, ${err}`);
 });
