@@ -44,12 +44,12 @@ async function getPrices() {
   const resBody = await request('https://otcbtc.com/');
   const $ = cheerio.load(resBody);
   const $trs = $('.lp-section-2-coin').eq(0).find('.lp-coin-list-content');
-  prices.outPrices.BTC = formatPrice($trs.eq(1).find('.lp-coin-list-fiat-highest-price').text());
-  prices.inPrices.BTC = formatPrice($trs.eq(1).find('.lp-coin-list-trading-latest-price .lp-coin-list-trading-fiat-price').text());
+  prices.outPrices.BTC = formatPrice($trs.eq(0).find('.lp-coin-list-fiat-highest-price').text());
+  prices.inPrices.BTC = formatPrice($trs.eq(0).find('.lp-coin-list-trading-latest-price .lp-coin-list-trading-fiat-price').text());
   // prices.outPrices.ETH = formatPrice($trs.eq(1).find('.lp-coin-list-fiat-highest-price').text());
   // prices.inPrices.ETH = formatPrice($trs.eq(1).find('.lp-coin-list-trading-latest-price .lp-coin-list-trading-fiat-price').text());
-  prices.outPrices.EOS = formatPrice($trs.eq(3).find('.lp-coin-list-fiat-highest-price').text());
-  prices.inPrices.EOS = formatPrice($trs.eq(3).find('.lp-coin-list-trading-latest-price .lp-coin-list-trading-fiat-price').text());
+  prices.outPrices.EOS = formatPrice($trs.eq(2).find('.lp-coin-list-fiat-highest-price').text());
+  prices.inPrices.EOS = formatPrice($trs.eq(2).find('.lp-coin-list-trading-latest-price .lp-coin-list-trading-fiat-price').text());
   return prices;
 }
 
