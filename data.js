@@ -41,20 +41,14 @@ async function getPrices() {
     inPrices: {},
     outPrices: {},
   };
-  const resBody = await request('https://otcbtc.com/', {
-    headers: {
-      'Cookie': 'locale=zh-CN;',
-    },
-  });
-  console.log(resBody);
-  const $ = cheerio.load(resBody);
-  const $trs = $('.lp-section-2-coin').eq(0).find('.lp-coin-list-content');
-  prices.outPrices.BTC = formatPrice($trs.eq(2).find('.lp-coin-list-fiat-highest-price').text());
-  prices.inPrices.BTC = formatPrice($trs.eq(2).find('.lp-coin-list-trading-latest-price .lp-coin-list-trading-fiat-price').text());
-  // prices.outPrices.ETH = formatPrice($trs.eq(1).find('.lp-coin-list-fiat-highest-price').text());
-  // prices.inPrices.ETH = formatPrice($trs.eq(1).find('.lp-coin-list-trading-latest-price .lp-coin-list-trading-fiat-price').text());
-  prices.outPrices.EOS = formatPrice($trs.eq(4).find('.lp-coin-list-fiat-highest-price').text());
-  prices.inPrices.EOS = formatPrice($trs.eq(4).find('.lp-coin-list-trading-latest-price .lp-coin-list-trading-fiat-price').text());
+  let resBody = await request('https://otc-api.huobi.pro/v1/data/trade/list/public?country=37&currency=1&payMethod=0&currPage=1&coinId=1&tradeType=1&merchant=1&online=1');
+  resBody = JSON.parse(resBody);
+  prices.inPrices.BTC = resBody.data[0].fixedPrice;
+  resBody = await request('https://api.huobipro.com/market/detail?symbol=btcusdt');
+  const btcusdt = JSON.parse(resBody).tick.close;
+  resBody = await request('http://apilayer.net/api/live?access_key=29f539138de93b867c43f988068a40b5&currencies=CNY&format=1');
+  resBody = JSON.parse(resBody);
+  prices.outPrices.BTC = parseInt(btcusdt * resBody.quotes.USDCNY);
   return prices;
 }
 
@@ -74,13 +68,10 @@ function logError(msg) {
 getData().then((prices) => {
   const now = getNowTimeString();
   fs.appendFileSync(path.resolve(dataDir, 'BTC.csv'), `${now},${prices.inPrices.BTC},${prices.outPrices.BTC}\n`);
-  // fs.appendFileSync(path.resolve(dataDir, 'ETH.csv'), `${now},${prices.inPrices.ETH},${prices.outPrices.ETH}\n`);
-  fs.appendFileSync(path.resolve(dataDir, 'EOS.csv'), `${now},${prices.inPrices.EOS},${prices.outPrices.EOS}\n`);
   const msg =
 `
 ### GAP
 > A: ${robotMsg(prices.inPrices.BTC, prices.outPrices.BTC)}\n
-> C: ${robotMsg(prices.inPrices.EOS, prices.outPrices.EOS)}\n
 `;
   request({
     method: 'POST',
