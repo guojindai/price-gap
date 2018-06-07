@@ -43,10 +43,10 @@ async function getPrices() {
   };
   let resBody = await request('https://otc-api.huobi.pro/v1/data/trade/list/public?country=37&currency=1&payMethod=0&currPage=1&coinId=2&tradeType=1&merchant=1&online=1');
   resBody = JSON.parse(resBody);
-  prices.outPrices.BTC = resBody.data[0].fixedPrice;
+  prices.outPrices.BTC = resBody.data[0].fixedPrice * 10000;
   resBody = await request('http://apilayer.net/api/live?access_key=29f539138de93b867c43f988068a40b5&currencies=CNY&format=1');
   resBody = JSON.parse(resBody);
-  prices.inPrices.BTC = resBody.quotes.USDCNY;
+  prices.inPrices.BTC = resBody.quotes.USDCNY * 10000;
   return prices;
 }
 
