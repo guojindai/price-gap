@@ -41,14 +41,12 @@ async function getPrices() {
     inPrices: {},
     outPrices: {},
   };
-  let resBody = await request('https://otc-api.huobi.pro/v1/data/trade/list/public?country=37&currency=1&payMethod=0&currPage=1&coinId=1&tradeType=1&merchant=1&online=1');
+  let resBody = await request('https://otc-api.huobi.pro/v1/data/trade/list/public?country=37&currency=1&payMethod=0&currPage=1&coinId=2&tradeType=1&merchant=1&online=1');
   resBody = JSON.parse(resBody);
   prices.outPrices.BTC = resBody.data[0].fixedPrice;
-  resBody = await request('https://api.huobipro.com/market/detail?symbol=btcusdt');
-  const btcusdt = JSON.parse(resBody).tick.close;
   resBody = await request('http://apilayer.net/api/live?access_key=29f539138de93b867c43f988068a40b5&currencies=CNY&format=1');
   resBody = JSON.parse(resBody);
-  prices.inPrices.BTC = parseInt(btcusdt * resBody.quotes.USDCNY);
+  prices.inPrices.BTC = resBody.quotes.USDCNY;
   return prices;
 }
 
